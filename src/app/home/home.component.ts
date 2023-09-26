@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HousinglocationComponent } from '../housinglocation/housinglocation.component';
 import { Housinglocation } from '../housinglocation';
+import { HousingService } from '../housing.service';
+
 
 @Component({
   selector: 'app-home',
@@ -10,26 +12,33 @@ import { Housinglocation } from '../housinglocation';
   template: `
   <section>
     <form>
-      <input type="text" placeholder="Filter by city">
-      <button class="primary" type="button">Search</button>
+      <input type="text" placeholder="Filter by city" #filter>
+      <button class="primary" type="button" (click)="filterResults(filter.value)">Search</button>
     </form>
   </section>
   <section class="results">
-    <app-housing-location></app-housing-location>
+    <app-housing-location *ngFor="let housingLocation of filteredLocationList" [housingLocation]="housingLocation"></app-housing-location>
   </section>
   `,
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
   readonly baseUrl = 'https://angular.io/assets/images/tutorials/faa';
-  housingLocation :Housinglocation = {
-    id:9999,
-    name:"Test Home",
-    city:"Test city",
-    state:"ST",
-    photo:`${this.baseUrl}/example-house.jpg`,
-    availableUnits:99,
-    wifi:true,
-    laundry:false
-  }
+
+    housingLocationList: Housinglocation[] = [];
+    housingService:HousingService=inject(HousingService)
+    filteredLocationList:Housinglocation[] = []
+
+    constructor(){
+      this.housingService.getAllHousingLocations().then((house:Housinglocation[])=>{
+        this.housingLocationList = house;
+        this.filteredLocationList = house
+      })
+    }
+    filterResults(text:string){
+      if(!text){
+        this.filteredLocationList = this.housingLocationList
+      }
+      this.filteredLocationList = this.housingLocationList.filter(house=> house.city.toLowerCase().includes(text.toLowerCase()))
+    }
 }
